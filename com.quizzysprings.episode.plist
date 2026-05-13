@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.quizzysprings.episode</string>
+
+    <!-- Path to the shell script -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/marcsylvester/Quizzy Springs Videos/run-episode.sh</string>
+    </array>
+
+    <!-- Schedule: Monday(1), Wednesday(3), Friday(5) at 10:00 AM local time.
+         Pipeline runs ~10:00-10:08, uploads to YouTube as private/scheduled,
+         then YouTube auto-publishes it at 2:00 PM Pacific (4-hour buffer for
+         HD/4K encoding). -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>1</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos/logs/launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos/logs/launchd.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+</dict>
+</plist>

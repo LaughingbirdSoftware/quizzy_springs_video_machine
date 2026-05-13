@@ -1,0 +1,36 @@
+════════════════════════════════════════════════════════
+▶ STARTED: Tue May 12 09:58:22 PDT 2026
+════════════════════════════════════════════════════════
+📋 Today's topic: 2000s Nostalgia Quiz
+📁 Slug: 2026-05-12-2000s-nostalgia-quiz
+🤖 Invoking Claude Code...
+
+Episode complete. Final video: 679.8s (~11:20), 142 MB. All 3 thumbnails and metadata files in place. Themed `bg_intro.png` generated.
+
+Pipeline timings: VO 35s, render 256s, assembly 131s.
+
+EPISODE_COMPLETE: 2026-05-12-2000s-nostalgia-quiz
+
+🤖 Claude Code exited with code: 0
+✅ Video created: /Users/marcsylvester/Quizzy Springs Videos/episodes/2026-05-12-2000s-nostalgia-quiz/final/video.mp4
+-rw-r--r--@ 1 marcsylvester  staff   142M May 12 10:09 /Users/marcsylvester/Quizzy Springs Videos/episodes/2026-05-12-2000s-nostalgia-quiz/final/video.mp4
+
+📤 Uploading to YouTube (scheduled for 2 PM)...
+🎬 Episode: 2026-05-12-2000s-nostalgia-quiz
+📅 Will go public at: Tuesday, May 12 at 2:00 PM PDT
+📝 Title: s Nostalgia Quiz: Can You Score 20/20?
+🏷️  Tags: 25 tags
+🖼️  Thumbnail: yes
+🌐 Opening browser for one-time YouTube authorization...
+Please visit this URL to authorize this application: https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=13100414489-bapaptge0uaeatub38tc4794onrhit2o.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A57684%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fyoutube.upload+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fyoutube&state=QdFU8pd2YkC8fbakgWzrIoIyKg5IvE&code_challenge=KITpsKsDTcrxLJXYzpPq9w4B2ZxjNnyjBB1CGQ8Wsls&code_challenge_method=S256&access_type=offline
+📤 Uploading: s Nostalgia Quiz: Can You Score 20/20?
+   File: /Users/marcsylvester/Quizzy Springs Videos/episodes/2026-05-12-2000s-nostalgia-quiz/final/video.mp4 (142.1 MB)
+✅ Uploaded (scheduled): https://www.youtube.com/watch?v=i1hvWHeCvpI
+🖼️  Setting custom thumbnail...
+✅ Thumbnail set
+💾 URL saved to /Users/marcsylvester/Quizzy Springs Videos/episodes/2026-05-12-2000s-nostalgia-quiz/final/youtube_url.txt
+
+════════════════════════════════════════════════════════
+✅ DONE: Tue May 12 10:13:22 PDT 2026
+📊 86 topics remaining in queue
+════════════════════════════════════════════════════════

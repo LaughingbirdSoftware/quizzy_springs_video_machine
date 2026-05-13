@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS noise
+.DS_Store
+
+# Per-episode generated artifacts (big binaries; reproducible from questions.json)
+# Keep questions.json and the final mp4 + thumbnails + metadata, drop the intermediates.
+episodes/*/vo/*.mp3
+episodes/*/vo/*.json
+episodes/*/segments/*.mp4
+episodes/*/segments/*.json
+episodes/*/_work/
+
+# Anything in /tmp paths
+*.tmp
+client_secrets.json
