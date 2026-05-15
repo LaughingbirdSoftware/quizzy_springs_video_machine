@@ -4,6 +4,12 @@
 .env.*.local
 *.key
 *.pem
+*.pickle
+token.pickle
+client_secrets.json
+service_account.json
+# Forensic copy of the broken service-account upload script
+youtube_upload.py.service_account_attempt
 
 # Python
 .venv/
@@ -12,15 +18,20 @@ __pycache__/
 
 # macOS noise
 .DS_Store
+Icon?
 
-# Per-episode generated artifacts (big binaries; reproducible from questions.json)
-# Keep questions.json and the final mp4 + thumbnails + metadata, drop the intermediates.
-episodes/*/vo/*.mp3
-episodes/*/vo/*.json
-episodes/*/segments/*.mp4
-episodes/*/segments/*.json
-episodes/*/_work/
+# Claude Code worktrees + project state
+.claude/
+
+# Per-episode generated content — ALL of episodes/ is reproducible from
+# code + topics queues, so we don't commit any of it. Keep code only.
+episodes/
+
+# Runtime logs
+logs/
+
+# TMDB cache from older runs (now lives under episodes/<slug>/tmdb/)
+tmdb_cache/
 
 # Anything in /tmp paths
 *.tmp
-client_secrets.json

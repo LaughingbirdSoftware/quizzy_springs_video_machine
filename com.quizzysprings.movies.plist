@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.quizzysprings.movies</string>
+
+    <!-- Path to the shell script -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/marcsylvester/Quizzy Springs Videos/run-movies-episode.sh</string>
+    </array>
+
+    <!-- Schedule: Tuesday(2), Thursday(4), Saturday(6) at 10:00 AM local time.
+         Pipeline runs ~10:00-10:08, uploads to YouTube as private/scheduled,
+         then YouTube auto-publishes it at 2:00 PM Pacific (4-hour buffer for
+         HD/4K encoding). Sits between the trivia show's Mon/Wed/Fri slots. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>6</integer>
+            <key>Hour</key>
+            <integer>10</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos/logs/launchd.movies.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/marcsylvester/Quizzy Springs Videos/logs/launchd.movies.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+</dict>
+</plist>

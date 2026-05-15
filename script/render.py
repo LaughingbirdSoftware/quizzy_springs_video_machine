@@ -247,11 +247,18 @@ def render_question_card(bg, frame_num, q_data, phase, phase_frame,
     correct = q_data["answer"]
     opts = q_data["options"]
 
-    # Slide-in animation for phase A
+    # Slide-in animation for phase A — synced to the actual VO letter timestamps
+    # so each answer box appears exactly when the narrator says its letter.
     visible = [True]*4
     slide_offsets = [0,0,0,0]
     if phase == "A":
-        slide_starts = [30, 42, 54, 66]
+        # letter_frames is a dict {"A": frame_within_vo_options, "B": ..., "C": ..., "D": ...}.
+        # Absolute slide-in frame for each box = letter_offsets + letter_frames[L].
+        # Fallback to progressive fixed offsets if letter_frames is malformed.
+        if isinstance(letter_frames, dict) and all(L in letter_frames for L in "ABCD"):
+            slide_starts = [letter_offsets + letter_frames[L] for L in "ABCD"]
+        else:
+            slide_starts = [30, 42, 54, 66]
         for i, ss in enumerate(slide_starts):
             if phase_frame < ss:
                 visible[i] = False
@@ -407,31 +414,45 @@ def render_intro_frame(frame_num):
         draw_text_shadow(d, (W//2, int(ty)), "QUIZZY SPRINGS", tf,
                          (255,235,80), anchor="mm", offset=(5,5))
 
-    # Subtitle "POP CULTURE QUIZ" fade-in frames 90-150
+    # Subtitle fade-in frames 90-150 — autofit to safe width so long topics
+    # like "VIRAL INTERNET TRENDS QUIZ" don't overflow the frame.
     if frame_num >= 90:
         f = frame_num - 90
         alpha = min(255, int(255 * f/60))
-        sf = F(120, "xbold")
+        subtitle_text = _QDATA.get("intro_subtitle", "QUIZ")
+        safe_w = W - 240  # 120px margin on each side
+        # Step font size down until it fits
+        sub_size = 120
+        while sub_size > 56:
+            sf = F(sub_size, "xbold")
+            bbox = d.textbbox((0, 0), subtitle_text, font=sf)
+            if bbox[2] - bbox[0] <= safe_w:
+                break
+            sub_size -= 6
         ovr = Image.new("RGBA", img.size, (0,0,0,0))
         od = ImageDraw.Draw(ovr)
-        draw_text_shadow(od, (W//2, 740), _QDATA.get("intro_subtitle", "QUIZ"), sf,
+        draw_text_shadow(od, (W//2, 740), subtitle_text, sf,
                          (255,255,255,alpha), anchor="mm",
                          shadow=(0,0,0,min(180, alpha)), offset=(4,4))
         img.alpha_composite(ovr)
 
-    # Tagline "20 QUESTIONS" pulses in frames 150+
+    # Tagline "20 QUESTIONS" floats up + fades in frames 150-180, then sits
+    # at a fixed size. (Previous per-frame scale pulse caused jagged Ken-Burns
+    # artifacts when integer pixel sizes shifted frame-to-frame.)
     if frame_num >= 150:
         f = frame_num - 150
         if f < 30:
-            scale = 0.6 + 0.4*(f/30)
-            alpha = int(255 * f/30)
+            t = f / 30
+            ease = 1 - (1-t)**3
+            alpha = int(255 * ease)
+            y_offset = int(40 * (1 - ease))  # floats up 40 px into position
         else:
-            scale = 1.0 + 0.04*math.sin(f/20)
             alpha = 255
-        ts = F(int(110*scale), "black")
+            y_offset = 0
+        ts = F(110, "black")  # CONSTANT size — no pulse
         ovr = Image.new("RGBA", img.size, (0,0,0,0))
         od = ImageDraw.Draw(ovr)
-        draw_text_shadow(od, (W//2, 900), "20 QUESTIONS", ts,
+        draw_text_shadow(od, (W//2, 900 + y_offset), "20 QUESTIONS", ts,
                          (80,255,220,alpha), anchor="mm",
                          shadow=(0,0,0,min(150,alpha)), offset=(3,3))
         img.alpha_composite(ovr)

@@ -16,7 +16,7 @@ This file is the runbook. **A fresh Claude Code session can read this top-to-bot
 - **Length target:** 10-12 min
 - **Aspect:** 1920×1080, 30 fps
 - **Voice (ElevenLabs):** voice_id `cgSgspJ2msm6clMCkdW9`, model `eleven_multilingual_v2`, stability 0.45 / similarity 0.85 / style 0.3
-- **Image model (Higgsfield via MCP):** `nano_banana_2` at 16:9
+- **Image model (thumbnails + backgrounds):** OpenAI `gpt-image-2` via `script/gen_thumbnail_openai.py` and `script/gen_background_openai.py`
 
 ---
 
@@ -85,8 +85,8 @@ Write `episodes/<slug>/questions.json` with exactly this schema (Pop Culture epi
   "channel": "Quizzy Springs",
   "title": "<short title>",
   "intro_subtitle": "<TOPIC> QUIZ",
-  "intro": "Welcome back to Quizzy Springs! Today we're testing your <topic> knowledge with 20 questions... Six easy, ten medium, four hard. Keep track of your score and let's see how you do!",
-  "outro": "That's a wrap on today's <topic> quiz! Drop your score in the comments — we love seeing how everyone did. If you had fun, subscribe to Quizzy Springs and tap the bell so you don't miss the next one. See you soon!",
+  "intro": "Today on Quizzy Springs we're testing your knowledge of <topic> — the <topic> trivia quiz. Twenty questions: six easy, ten medium, four hard. Keep track of your score and let's see how you do!",
+  "outro": "That's a wrap on today's <topic> quiz! Drop your score in the comments — we love seeing how everyone did. If you had fun, subscribe to Quizzy Springs and tap the bell so you don't miss the next one. See you next time!",
   "questions": [
     {
       "n": 1, "difficulty": "easy", "category": "<topical category>", "era": "classic|2000s-2010s|recent",
@@ -103,11 +103,17 @@ Write `episodes/<slug>/questions.json` with exactly this schema (Pop Culture epi
 **Constraints (must all hold):**
 - 20 questions exactly, numbered 1-20
 - Difficulty split: **Q1-6 easy, Q7-16 medium, Q17-20 hard**
+- **Difficulty floor — even the easiest question must require thought.**
+  - ❌ Too easy: "Who is the king of the jungle?" → "What role did Tom Hanks play in Forrest Gump?"
+  - ✅ Easy-but-engaging tier: "Who played Forrest's mother in Forrest Gump?" / "What was the name of the diner where Forrest ate?"
+  - The reference target: 80%+ of viewers should still get easy questions right, but only after a beat of recall — not instantly. If the answer is obvious from a 2-second glance at the topic, it's too easy.
 - Era spread: **~30% classic / 40% 2000s-2010s / 30% recent** (recent = last 8 yrs)
 - Mix categories — never two adjacent questions of the same category
 - Family-friendly. No copyrighted lyrics. Reference titles/artists factually
 - Each question ≤17 words. Each option ≤5 words. Each fun_fact ≤17 words
 - `intro_subtitle` is the line rendered under "QUIZZY SPRINGS" on the intro card (e.g. `"ANIMAL QUIZ"`, `"SPORTS QUIZ"`, `"90s MOVIES QUIZ"`). Keep it ≤20 chars, ALL CAPS. **Always set this** — without it the intro card falls back to a generic "QUIZ".
+- **Intro line MUST lead with the topic keyword phrase** (e.g. *"Today on Quizzy Springs we're testing your knowledge of \<topic\> — the \<topic\> trivia quiz..."*). YouTube's algorithm indexes the first ~30 seconds heavily; "Welcome back" wastes prime SEO real estate.
+- **Outro line MUST be date-agnostic** — never name a day of the week ("see you Friday" — the next video might be Saturday). Use "see you next time" or "see you soon" instead.
 
 Validate by running:
 ```bash
@@ -131,11 +137,33 @@ print('OK')
 
 **STOP HERE and show the user the question list for approval before continuing.** Voiceover generation costs real ElevenLabs credits (~$3-5/episode).
 
-### 3. Theme the intro background (always) — and other backgrounds if desired
+### 3. Theme the backgrounds (OpenAI gpt-image-2) — generate the FULL set of 7
 
-Before running the pipeline, generate at least a themed `bg_intro.png` for the episode and save it to `episodes/<slug>/bg_intro.png` (1920×1080). See the **Themed backgrounds per episode** section below for the prompt skeleton, palette examples, and resize procedure. The renderer auto-picks up per-episode backgrounds — no code edits.
+Generate **all 7 backgrounds** per episode using `script/gen_background_openai.py`. The renderer auto-picks up per-episode `bg_*.png` files from `episodes/<slug>/` first, then falls back to shared `visuals/bg_*.png`. Generating all 7 gives the episode a visually coherent identity from intro through outro — same palette, same atmospheric vibe, just composed differently for each card.
 
-Optionally do the full set of 7 (`bg_outro`, `bg_easy`, `bg_medium`, `bg_hard`, `bg_question`, `bg_reveal`) for a fully themed episode (~$2).
+```bash
+# Repeat for all 7 names below, each with a topical opener that shares
+# the same palette + atmosphere story.
+EPISODE_SLUG="<slug>" .venv/bin/python script/gen_background_openai.py <bg_name> "<topical opener>"
+```
+
+**The 7 slots:**
+
+| Slot | Mode (auto) | What sits on top | What to ask for |
+|---|---|---|---|
+| `bg_intro` | scene | "QUIZZY SPRINGS" title + subtitle + "20 QUESTIONS" | Topical scene, blurred, dim center for big text |
+| `bg_outro` | scene | "Subscribe" / closing text | Same scene style as intro, gentler |
+| `bg_easy` | scene | "EASY ROUND" big label | Same palette as intro, brighter mood |
+| `bg_medium` | scene | "MEDIUM ROUND" | Same palette, slightly more intense |
+| `bg_hard` | scene | "HARD ROUND" | Same palette, most intense / dramatic mood |
+| `bg_question` | abstract | The dark navy question card | Pure gradient atmosphere, NO objects, same color story |
+| `bg_reveal` | abstract | The answer-reveal card | Pure gradient atmosphere, NO objects, slightly more "celebratory" tone |
+
+**Critical rule: maintain palette + atmosphere coherence across all 7.** If `bg_intro` is sepia-and-azure travel atlas, then `bg_question` should be a sepia parchment gradient (not pink clouds). If `bg_intro` is dreamy theme-park magenta-and-purple, `bg_question` should be that same magenta-and-purple, just emptier. Viewers should feel like one consistent episode aesthetic, not seven random images.
+
+See the **Themed backgrounds per episode** section below for palette examples per topic and the IP-safety constraints. The script handles size, cropping, and IP guardrails automatically (1920×1080).
+
+**Cost:** ~$0.06 per background × 7 = ~$0.42 per episode. ~$5.46/month across the trivia pipeline. Worth it for the visual coherence.
 
 ### 4. Run the pipeline
 
@@ -150,15 +178,27 @@ This runs three stages automatically (~5-7 min total):
 
 Final video lands at `episodes/<slug>/final/video.mp4`.
 
-### 5. Generate thumbnails (Higgsfield MCP)
+### 5. Generate thumbnails (OpenAI gpt-image-2)
 
-Call `mcp__93a90592-e086-4c0e-a93a-b4b2f62d8180__generate_image` three times with model `nano_banana_2`, `aspect_ratio: "16:9"`, `resolution: "1k"`. Prompt templates:
+Just run the helper — it reads `intro_subtitle` from `questions.json`, generates 3 distinct thumbnails with topic-direct text, crops to 16:9, and saves to `final/thumbnail_{1,2,3}.png` at 1280×720 (under 2 MB each).
 
-- **Thumbnail 1:** `Bold YouTube quiz thumbnail. Vibrant purple to hot pink gradient with electric neon accents. Giant bold white text '<TOPIC IN CAPS>' top half. Bold yellow text '20 QUESTIONS' bottom half. High contrast energetic. NO logos, NO celebrity faces, NO real-world likenesses. 1280x720.`
-- **Thumbnail 2:** `Bold YouTube quiz thumbnail. Electric blue and magenta neon glow. Massive bold yellow text 'CAN YOU SCORE 20/20?'. Question mark graphics in corners. Modern game show energy. NO logos. 1280x720.`
-- **Thumbnail 3:** `Bold YouTube quiz thumbnail. Dark navy with vibrant pink and yellow neon text '<HOW TOPIC ARE YOU?>'. Retro arcade aesthetic. Glowing edges. NO logos. 1280x720.`
+```bash
+EPISODE_SLUG="<slug>" .venv/bin/python script/gen_thumbnail_openai.py
+```
 
-Poll with `job_display`, then download via the returned `rawUrl`, resize to 1280×720 with Pillow, save to `episodes/<slug>/final/thumbnail_{1,2,3}.png`.
+**Cost:** ~$0.18 per episode (3 × $0.06).
+
+**Why gpt-image-2 over Higgsfield:** the older Higgsfield path garbled text ("Sleepless in Seella," "Can YASS this quiz") and invented distorted celebrity faces. gpt-image-2 renders text accurately.
+
+#### Thumbnail vs. title wording — split surfaces strategically
+
+| Surface | Style | Example for a sports quiz |
+|---|---|---|
+| **Thumbnail text** (auto, baked into the helper prompts) | **Topic-direct, 3–5 words, ALL CAPS** | "SPORTS TRIVIA QUIZ" |
+| **Video title** (line 1 of `title_options.txt`) | Hook / curiosity gap | "Can You Score 20/20 on This Sports Quiz?" |
+| **Description hook (line 1 of `description.txt`)** | Challenge / question | "Think you know your sports trivia?" |
+
+The thumbnail is a 0.3-second scroll-stopping device — viewers scan for "what is this?" in that window. Topic-direct words classify instantly and out-perform curiosity-gap lines on the thumbnail. Save the curiosity hook for the *title*.
 
 ### 6. Write metadata files
 
@@ -242,8 +282,21 @@ Reference: [`episodes/2026-05-11-pop-culture-001/final/description.txt`](episode
 
 - Total runtime
 - Final video duration + size
-- Cost estimate (~$3-5 in ElevenLabs credits; $0 if backgrounds reused)
+- Cost estimate (~$3-5 in ElevenLabs credits; ~$0.18 thumbnails; ~$0.42 backgrounds if generated fresh)
 - Paths to final/video.mp4, the 3 thumbnails, and the 3 metadata files
+
+---
+
+## SEO filename note
+
+The pipeline writes the final video as `final/video.mp4`. The upload step
+(`script/youtube_upload_trivia.py`, called by `run-episode.sh`) automatically
+renames it to a topic-derived filename (e.g. `sports-trivia-quiz.mp4`)
+before uploading, so the filename YouTube sees matches the content. This
+is a minor but real ranking signal.
+
+You don't need to do anything for this — the rename happens automatically
+in the upload wrapper.
 
 ---
 
@@ -260,7 +313,60 @@ The seven background names the renderer looks for:
 - `bg_question` — question cards
 - `bg_reveal` — answer reveal cards
 
-**Generation:** call `mcp__93a90592-e086-4c0e-a93a-b4b2f62d8180__generate_image` with model `nano_banana_2`, `aspect_ratio: "16:9"`, `resolution: "2k"` (the 2k crop is ~2752×1536, which Pillow downsamples cleanly to 1920×1080). Poll with `job_display`, download the `rawUrl`, resize to **exactly 1920×1080** with Pillow `LANCZOS`, save to `episodes/<slug>/bg_<name>.png`.
+**Generation:** use `script/gen_background_openai.py` (OpenAI gpt-image-2). Pass the background name and a topical prompt; the script handles 16:9 cropping, 1920×1080 sizing, IP-safety guardrails, and PNG output automatically.
+
+```bash
+EPISODE_SLUG="<slug>" .venv/bin/python script/gen_background_openai.py bg_intro \
+    "<topical opener — see examples below>"
+```
+
+Repeat for each of the 7 background names. The script picks the right composition mode automatically based on the name:
+
+- **`bg_intro`, `bg_outro`, `bg_easy`, `bg_medium`, `bg_hard`** → **scene mode**.
+  Generic, blurred, topical scene imagery with a dimmed center so the foreground
+  title text remains legible. Used wherever large text overlays the background.
+
+- **`bg_question`, `bg_reveal`** → **abstract mode**.
+  Pure gradient atmosphere with no objects. Used where a full content card sits
+  on top of the bg — any scene imagery would compete with the card.
+
+You can force mode with an optional third arg: `... bg_intro "<prompt>" abstract` or `... bg_question "<prompt>" scene`. Rarely needed.
+
+### Topical opener examples — keep them generic for IP safety
+
+The script's tail enforces "no logos, no trademarked characters, no celebrity likenesses, no real-world IP." Your opener should reinforce the topic *evocatively* — period/genre cues, not specific brands. Examples:
+
+| Topic | ✅ Topical opener (scene mode) |
+|---|---|
+| Marvel / superheroes | "Generic comic-book panel burst, halftone dot pattern in red and blue, radiating energy lines, abstract superhero comic aesthetic, no specific characters" |
+| 90s rom-coms | "90s living room interior with a vintage CRT television, soft sunset light through blinds, retro pastel decor, no people, dreamy nostalgic atmosphere" |
+| Sports | "Empty stadium under dimmed floodlights at dusk, blurred distant field, faint motion-streak haze, no team logos or markings" |
+| Horror | "Foggy candlelit gothic interior at midnight, deep blood-red and obsidian tones, smoke drifting, no figures or faces" |
+| Sci-fi / Star Wars | "Generic deep-space starfield with soft nebula clouds, distant abstract spaceship silhouettes far in the background, no specific franchise" |
+| Pixar / animation | "Dreamy stylized animation studio backlot at golden hour, soft chalky pastels, generic cartoony shapes in background, no specific characters" |
+| Disney / theme-park | "Generic theme-park nighttime sky with distant colorful fireworks bursts in pinks and purples, soft bokeh, abstract suggestion of a fairy-tale castle silhouette far in the background, dreamy storybook magical atmosphere, pastel color palette, no specific characters or franchise references, sense of childhood wonder" |
+| Disney Channel era | "Generic 2000s teen-show set: stage lights, colorful pop graphics, abstract bokeh, no logos or characters" |
+| Reality TV | "Generic competition-show stage with dim spotlights, bokeh audience silhouettes far back, dramatic side lighting, no logos" |
+| Tarantino films | "Sun-bleached 1970s diner interior, vintage neon outside, cinematic widescreen mood, no people, grindhouse film grain" |
+| HBO drama | "Moody prestige-drama atmosphere, dark cinematic side lighting, abstract suggestion of a city skyline, no specific show references" |
+| Geography / travel / "guess the country" | "Generic blurred travel-atlas atmosphere with a soft glowing globe orb suggested in the deep background, faint vintage map line textures, blurry pastel silhouettes of generic landmark shapes (distant mountain ranges, towers, domes, columns) along the edges far out of focus, dreamy sepia-and-azure travel-poster palette, no specific country names, no recognizable national flags, no real-world landmarks, abstract sense of global exploration" |
+| Music | "Generic concert atmosphere with dim stage lights, abstract sound-wave bokeh, soft purple-and-amber glow, distant blurred crowd silhouettes, no specific artist or band, no logos, no recognizable venue" |
+| Video games | "Generic retro arcade atmosphere with soft pixel-light bokeh, abstract joystick and arcade-cabinet silhouettes far out of focus, neon magenta and cyan palette, no specific game titles or characters, dreamy retro-gaming mood" |
+| Cartoons / animation history | "Dreamy hand-painted animation studio vibe at golden hour, soft chalky pastel cels stacked in the deep background, faint generic cartoon-style cloud shapes far out of focus, no specific characters or studios, soft nostalgic palette" |
+| Sitcoms | "Generic warmly-lit living-room sitcom set at night, soft camera-haze bokeh from production lights, distant blurred apartment-set background, no actors or recognizable shows, cozy nostalgic palette" |
+
+**The pattern that works:** *"Generic blurred \<topical\> atmosphere with \<evocative elements\> at the edges in soft focus, dimmed center for text overlay, no specific \<IP elements\>, abstract sense of \<topic\>."* Reach for this shape on any topic.
+
+### Critical IP guardrails
+
+For Hollywood-edition episodes especially, the opener must NEVER include any of:
+
+- Real brand names ("Marvel", "Disney", "Star Wars", "Netflix")
+- Trademarked character names ("Spider-Man", "Mickey Mouse", "Iron Man")
+- Specific franchise design elements (the actual Death Star, an actual Iron Man helmet, etc.)
+- Celebrity names or likeness cues
+
+The tail enforces this in the prompt to OpenAI, but reinforce it in the opener too. Words like "generic," "abstract suggestion of," "evocative of the era," "no specific characters" are your friends.
 
 **Theme prompt skeleton** (write a topical opener, then ALWAYS append the universal tail):
 
@@ -273,7 +379,7 @@ Topical palette examples:
 - **Sci-fi:** "Deep space gradient, nebula purples and cyans, faint starfield, subtle hex-grid pattern, holographic edge glow."
 - **90s movies:** "VHS-grain texture with bold magenta and teal gradient, soft chromatic aberration, subtle film-burn edges."
 
-**Cost:** ~$0.30 per background. Recommended minimum (intro only): ~$0.30. Full themed set of 7: ~$2.
+**Cost:** ~$0.06 per background (OpenAI gpt-image-2 standard). Recommended minimum (intro only): ~$0.06. Full themed set of 7: ~$0.42.
 
 ---
 
@@ -341,7 +447,8 @@ Each step is idempotent:
 | Music | 0 (reused) | $0 |
 | SFX | 0 (reused) | $0 |
 | Backgrounds | 0 (reused) — or ~$2 themed | $0-2 |
-| Thumbnails (3 × Higgsfield `nano_banana_2` 1k) | 3 | ~$0.50 |
+| Thumbnails (3 × OpenAI gpt-image-2 standard) | 3 | ~$0.18 |
+| Backgrounds (7 × OpenAI gpt-image-2, full themed set per episode) | 7 | ~$0.42 |
 | **Total per new episode** | — | **~$3.50-7.50** |
 
 Wall-clock time per episode after questions approved: **~5-7 minutes**.

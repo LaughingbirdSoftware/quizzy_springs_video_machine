@@ -23,7 +23,6 @@ saves credentials and uploads are silent forever.
 """
 
 import os
-import re
 import sys
 import pickle
 from datetime import datetime, timedelta
@@ -119,7 +118,7 @@ def read_metadata(slug):
     title = None
     if title_file.exists():
         for line in title_file.read_text().splitlines():
-            cleaned = re.sub(r'^\s*\d{1,2}[.\)\-:]\s*', '', line.strip())
+            cleaned = line.strip().lstrip("0123456789.-) ").strip()
             if cleaned and len(cleaned) > 5:
                 title = cleaned[:100]
                 break
